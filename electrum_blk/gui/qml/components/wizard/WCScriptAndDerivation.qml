@@ -115,7 +115,7 @@ WizardComponent {
                 text: qsTr('legacy (p2pkh)')
                 visible: !isMultisig
             }
-            // Blackcoin: disable SegWit wallets for now
+            // Blackcoin: disable wrapped segwit (p2wpkh-p2sh) as witness inside P2SH is not supported
             /*
             ElRadioButton {
                 Layout.fillWidth: true
@@ -124,15 +124,16 @@ WizardComponent {
                 text: qsTr('wrapped segwit (p2wpkh-p2sh)')
                 visible: !isMultisig
             }
+            */
+            // Blackcoin: enable native segwit (p2wpkh)
             ElRadioButton {
                 Layout.fillWidth: true
                 ButtonGroup.group: scripttypegroup
                 property string scripttype: 'p2wpkh'
-                checked: !isMultisig
+                checked: false
                 text: qsTr('native segwit (p2wpkh)')
                 visible: !isMultisig
             }
-            */
 
             // multisig
             ElRadioButton {
@@ -144,7 +145,7 @@ WizardComponent {
                 enabled: !cosigner || wizard_data['script_type'] == 'p2sh'
                 checked: cosigner ? wizard_data['script_type'] == 'p2sh' : isMultisig
             }
-            // Blackcoin: disable SegWit wallets for now
+            // Blackcoin: disable wrapped segwit multisig (p2wsh-p2sh) as witness inside P2SH is not supported
             /*
             ElRadioButton {
                 Layout.fillWidth: true
@@ -155,6 +156,8 @@ WizardComponent {
                 enabled: !cosigner || wizard_data['script_type'] == 'p2wsh-p2sh'
                 checked: cosigner ? wizard_data['script_type'] == 'p2wsh-p2sh' : false
             }
+            */
+            // Blackcoin: enable native segwit multisig (p2wsh)
             ElRadioButton {
                 Layout.fillWidth: true
                 ButtonGroup.group: scripttypegroup
@@ -162,9 +165,8 @@ WizardComponent {
                 text: qsTr('native segwit multisig (p2wsh)')
                 visible: isMultisig
                 enabled: !cosigner || wizard_data['script_type'] == 'p2wsh'
-                checked: cosigner ? wizard_data['script_type'] == 'p2wsh' : isMultisig
+                checked: cosigner ? wizard_data['script_type'] == 'p2wsh' : false
             }
-            */
 
             InfoTextArea {
                 Layout.fillWidth: true
