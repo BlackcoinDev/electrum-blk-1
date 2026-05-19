@@ -10,11 +10,5 @@
         "s": "20002",
         "t": "20001",
         "version": "1.4"
-    },
-    "electrum3.blackcoin.nl": {
-        "pruning": "-",
-        "s": "30002",
-        "t": "30001",
-        "version": "1.4"
     }
 }

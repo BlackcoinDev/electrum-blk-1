@@ -955,12 +955,14 @@ class Interface(Logger):
                 return ''
             if ip_addr.is_loopback:  # localhost is exempt
                 return ''
+            # Blackcoin: Change IPv4 subnets from /16 to /32 and IPv6 from /48 to /128
+            # to allow connecting to multiple servers on the same local network subnet.
             if ip_addr.version == 4:
-                slash16 = IPv4Network(ip_addr).supernet(prefixlen_diff=32-16)
-                return str(slash16)
+                slash32 = IPv4Network(ip_addr).supernet(prefixlen_diff=32-32)
+                return str(slash32)
             elif ip_addr.version == 6:
-                slash48 = IPv6Network(ip_addr).supernet(prefixlen_diff=128-48)
-                return str(slash48)
+                slash128 = IPv6Network(ip_addr).supernet(prefixlen_diff=128-128)
+                return str(slash128)
             return ''
 
         if not self._ipaddr_bucket:

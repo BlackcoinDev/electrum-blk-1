@@ -109,7 +109,8 @@ class BitcoinMainnet(AbstractNet):
     SEGWIT_HRP = "blk"
     BOLT11_HRP = SEGWIT_HRP
     GENESIS = "000001faef25dec4fbcf906e6242621df2c183bf232f263d0ba5b101911e4563"
-    DEFAULT_PORTS = {'t': '50001', 's': '50002'}
+    # Blackcoin: default ElectrumX listening ports
+    DEFAULT_PORTS = {'t': '10001', 's': '10002'}
     DEFAULT_SERVERS = read_json(os.path.join('chains', 'servers.json'))
     FALLBACK_LN_NODES = create_fallback_node_list(read_json(os.path.join('chains', 'fallback_lnnodes_mainnet.json')))
     CHECKPOINTS = read_json(os.path.join('chains', 'checkpoints.json'))
@@ -157,7 +158,8 @@ class BitcoinTestnet(AbstractNet):
     SEGWIT_HRP = "tblk"
     BOLT11_HRP = SEGWIT_HRP
     GENESIS = "0000724595fb3b9609d441cbfb9577615c292abf07d996d3edabc48de843642d"
-    DEFAULT_PORTS = {'t': '51001', 's': '51002'}
+    # Blackcoin: default ElectrumX listening ports
+    DEFAULT_PORTS = {'t': '10011', 's': '10012'}
     DEFAULT_SERVERS = read_json(os.path.join('chains', 'servers_testnet.json'), {})
     FALLBACK_LN_NODES = create_fallback_node_list(read_json(os.path.join('chains', 'fallback_lnnodes_testnet3.json'), {}))
     CHECKPOINTS = read_json(os.path.join('chains', 'checkpoints_testnet.json'), {})
