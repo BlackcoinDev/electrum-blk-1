@@ -399,7 +399,8 @@ class WCWalletType(WalletWizardComponent):
         message = _('What kind of wallet do you want to create?')
         wallet_kinds = [
             ('standard',  _('Standard wallet')),
-            ('2fa',       _('Wallet with two-factor authentication')),
+            # Blackcoin: 2FA is disabled/not supported for Blackcoin
+            # ('2fa',       _('Wallet with two-factor authentication')),
             ('multisig',  _('Multi-signature wallet')),
             ('imported',  _('Import Blackcoin addresses or private keys')),
         ]
