@@ -2740,6 +2740,9 @@ class LNWallet(LNWorker):
         return self._suggest_rebalance(RECEIVED, amount_sat)
 
     def suggest_swap_to_send(self, amount_sat, coins):
+        import electrum_blk.constants as constants
+        if not constants.SWAPS_ENABLED:
+            return None
         # fixme: if swap_amount_sat is lower than the minimum swap amount, we need to propose a higher value
         assert amount_sat > self.num_sats_can_send()
         try:
@@ -2756,6 +2759,9 @@ class LNWallet(LNWorker):
             return (chan, swap_recv_amount)
 
     def suggest_swap_to_receive(self, amount_sat):
+        import electrum_blk.constants as constants
+        if not constants.SWAPS_ENABLED:
+            return None
         assert amount_sat > self.num_sats_can_receive()
         try:
             suggestions = self._suggest_channels_for_rebalance(RECEIVED, amount_sat)

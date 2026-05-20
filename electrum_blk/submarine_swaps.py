@@ -216,6 +216,10 @@ class SwapManager(Logger):
         self.is_initialized = asyncio.Event()
 
     def start_network(self, network: 'Network'):
+        import electrum_blk.constants as constants
+        if not constants.SWAPS_ENABLED:
+            self.logger.info('start_network: submarine swaps are disabled for Blackcoin.')
+            return
         assert network
         if self.network is not None:
             self.logger.info('start_network: already started')

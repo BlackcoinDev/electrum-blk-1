@@ -537,7 +537,8 @@ class NewWalletWizard(AbstractWizard):
             if wallet_type == 'standard':
                 if isinstance(k, keystore.Xpub):  # has bip32 xpub
                     t1 = xpub_type(k.xpub)
-                    if t1 not in ['standard', 'p2wpkh', 'p2wpkh-p2sh']:  # disallow Ypub/Zpub
+                    # Blackcoin: disallow p2wpkh-p2sh (wrapped segwit) as witness inside P2SH is not supported
+                    if t1 not in ['standard', 'p2wpkh']:  # disallow Ypub/Zpub
                         validation_message = '%s: %s' % (_('Wrong key type'), t1)
                     else:
                         key_valid = True
@@ -549,7 +550,8 @@ class NewWalletWizard(AbstractWizard):
                 if not isinstance(k, keystore.Xpub):  # old mpk?
                     validation_message = '%s: %s' % (_('Wrong key type'), "not bip32")
                 t1 = xpub_type(k.xpub)
-                if t1 not in ['standard', 'p2wsh', 'p2wsh-p2sh']:  # disallow ypub/zpub
+                # Blackcoin: disallow p2wsh-p2sh (wrapped segwit multisig) as witness inside P2SH is not supported
+                if t1 not in ['standard', 'p2wsh']:  # disallow ypub/zpub
                     validation_message = '%s: %s' % (_('Wrong key type'), t1)
                 else:
                     key_valid = True
@@ -609,10 +611,12 @@ class NewWalletWizard(AbstractWizard):
             if isinstance(k, keystore.Xpub):  # has xpub
                 t1 = xpub_type(k.xpub)
                 if data['wallet_type'] == 'multisig':
-                    if t1 not in ['standard', 'p2wsh', 'p2wsh-p2sh']:
+                    # Blackcoin: disallow p2wsh-p2sh (wrapped segwit multisig) as witness inside P2SH is not supported
+                    if t1 not in ['standard', 'p2wsh']:
                         raise Exception('wrong key type %s' % t1)
                 else:
-                    if t1 not in ['standard', 'p2wpkh', 'p2wpkh-p2sh']:
+                    # Blackcoin: disallow p2wpkh-p2sh (wrapped segwit) as witness inside P2SH is not supported
+                    if t1 not in ['standard', 'p2wpkh']:
                         raise Exception('wrong key type %s' % t1)
             elif isinstance(k, keystore.Old_KeyStore):
                 pass
@@ -623,10 +627,12 @@ class NewWalletWizard(AbstractWizard):
             if isinstance(k, keystore.Xpub):  # has xpub
                 t1 = xpub_type(k.xpub)
                 if data['wallet_type'] == 'multisig':
-                    if t1 not in ['standard', 'p2wsh', 'p2wsh-p2sh']:
+                    # Blackcoin: disallow p2wsh-p2sh (wrapped segwit multisig) as witness inside P2SH is not supported
+                    if t1 not in ['standard', 'p2wsh']:
                         raise Exception('wrong key type %s' % t1)
                 else:
-                    if t1 not in ['standard', 'p2wpkh', 'p2wpkh-p2sh']:
+                    # Blackcoin: disallow p2wpkh-p2sh (wrapped segwit) as witness inside P2SH is not supported
+                    if t1 not in ['standard', 'p2wpkh']:
                         raise Exception('wrong key type %s' % t1)
             else:
                 raise Exception(f'unexpected keystore type: {type(k)}')

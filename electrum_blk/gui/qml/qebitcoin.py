@@ -71,7 +71,8 @@ class QEBitcoin(QObject):
         if wallet_type == 'standard':
             if isinstance(k, keystore.Xpub):  # has bip32 xpub
                 t1 = xpub_type(k.xpub)
-                if t1 not in ['standard', 'p2wpkh', 'p2wpkh-p2sh']:  # disallow Ypub/Zpub
+                # Blackcoin: disallow p2wpkh-p2sh (wrapped segwit) as witness inside P2SH is not supported
+                if t1 not in ['standard', 'p2wpkh']:  # disallow Ypub/Zpub
                     self.validationMessage = '%s: %s' % (_('Wrong key type'), t1)
                     return False
             elif isinstance(k, keystore.Old_KeyStore):
@@ -84,7 +85,8 @@ class QEBitcoin(QObject):
                 self.validationMessage = '%s: %s' % (_('Wrong key type'), "not bip32")
                 return False
             t1 = xpub_type(k.xpub)
-            if t1 not in ['standard', 'p2wsh', 'p2wsh-p2sh']:  # disallow ypub/zpub
+            # Blackcoin: disallow p2wsh-p2sh (wrapped segwit multisig) as witness inside P2SH is not supported
+            if t1 not in ['standard', 'p2wsh']:  # disallow ypub/zpub
                 self.validationMessage = '%s: %s' % (_('Wrong key type'), t1)
                 return False
         else:

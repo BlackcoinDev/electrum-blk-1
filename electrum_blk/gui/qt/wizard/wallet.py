@@ -399,7 +399,8 @@ class WCWalletType(WalletWizardComponent):
         message = _('What kind of wallet do you want to create?')
         wallet_kinds = [
             ('standard',  _('Standard wallet')),
-            ('2fa',       _('Wallet with two-factor authentication')),
+            # Blackcoin: 2FA is disabled/not supported for Blackcoin
+            # ('2fa',       _('Wallet with two-factor authentication')),
             ('multisig',  _('Multi-signature wallet')),
             ('imported',  _('Import Blackcoin addresses or private keys')),
         ]
@@ -676,9 +677,10 @@ class WCScriptAndDerivation(WalletWizardComponent, Logger):
             choices = [
                 # TODO: nicer to refactor 'standard' to 'p2sh', but backend wallet still uses 'standard'
                 ('standard', 'legacy multisig (p2sh)', normalize_bip32_derivation("m/45'/0")),
-                # Blackcoin: disable SegWit wallets for now
+                # Blackcoin: disable wrapped segwit (p2wsh-p2sh) as witness inside P2SH is not supported
                 # ('p2wsh-p2sh', 'p2sh-segwit multisig (p2wsh-p2sh)', purpose48_derivation(0, xtype='p2wsh-p2sh')),
-                # ('p2wsh', 'native segwit multisig (p2wsh)', purpose48_derivation(0, xtype='p2wsh')),
+                # Blackcoin: enable native segwit (p2wsh)
+                ('p2wsh', 'native segwit multisig (p2wsh)', purpose48_derivation(0, xtype='p2wsh')),
             ]
             if 'multisig_current_cosigner' in self.wizard_data:
                 # get script type of first cosigner
@@ -686,19 +688,18 @@ class WCScriptAndDerivation(WalletWizardComponent, Logger):
                 default_choice = xpub_type(ks.get_master_public_key())
                 hide_choices = True
             else:
-                # Blackcoin: disable SegWit wallets for now
-                # default_choice = 'p2wsh'
-                default_choice = 'standard'
+                # Blackcoin: default to native segwit when creating multisig wallet
+                default_choice = 'p2wsh'
         else:
-            # Blackcoin: disable SegWit wallets for now
-            # default_choice = 'p2wpkh'
-            default_choice = 'standard'
+            # Blackcoin: default to native segwit when creating standard wallet
+            default_choice = 'p2wpkh'
             choices = [
                 # TODO: nicer to refactor 'standard' to 'p2pkh', but backend wallet still uses 'standard'
                 ('standard', 'legacy (p2pkh)', bip44_derivation(0, bip43_purpose=44)),
-                # Blackcoin: disable SegWit wallets for now
+                # Blackcoin: disable wrapped segwit (p2wpkh-p2sh) as witness inside P2SH is not supported
                 # ('p2wpkh-p2sh', 'p2sh-segwit (p2wpkh-p2sh)', bip44_derivation(0, bip43_purpose=49)),
-                # ('p2wpkh', 'native segwit (p2wpkh)', bip44_derivation(0, bip43_purpose=84)),
+                # Blackcoin: enable native segwit (p2wpkh)
+                ('p2wpkh', 'native segwit (p2wpkh)', bip44_derivation(0, bip43_purpose=84)),
             ]
 
         if self.wizard_data['wallet_type'] == 'standard' and not self.wizard_data['keystore_type'] == 'hardware':

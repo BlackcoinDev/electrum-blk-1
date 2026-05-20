@@ -214,6 +214,13 @@ class SettingsDialog(QDialog, QtEventListener):
             self.config.NOSTR_RELAYS = str(self.nostr_relays_e.text())
         self.nostr_relays_e.editingFinished.connect(on_nostr_edit)
 
+        # Blackcoin: Submarine swaps and Nostr discovery are disabled, so disable relays setting.
+        import electrum_blk.constants as constants
+        if not constants.SWAPS_ENABLED:
+            nostr_relays_label.setEnabled(False)
+            self.nostr_relays_e.setEnabled(False)
+            self.nostr_relays_e.setToolTip(_("Submarine swaps and Nostr discovery are disabled for Blackcoin."))
+
         msat_cb = checkbox_from_configvar(self.config.cv.BTC_AMOUNTS_PREC_POST_SAT)
         msat_cb.setChecked(self.config.BTC_AMOUNTS_PREC_POST_SAT > 0)
 
