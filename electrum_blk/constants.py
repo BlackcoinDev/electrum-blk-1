@@ -254,3 +254,8 @@ NETS_LIST = tuple(all_subclasses(AbstractNet))
 
 # don't import net directly, import the module instead (so that net is singleton)
 net = BitcoinMainnet  # type: Type[AbstractNet]
+
+
+# Blackcoin specific change: Submarine swaps and Nostr discovery features are completely disabled.
+SWAPS_ENABLED = False
+
