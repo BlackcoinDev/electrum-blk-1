@@ -367,7 +367,10 @@ class ChannelsList(MyTreeView):
         toolbar, menu = self.create_toolbar_with_menu('')
         self.can_send_label = toolbar.itemAt(0).widget()
         menu.addAction(_('Rebalance channels'), lambda: self.on_rebalance())
-        menu.addAction(read_QIcon('update.png'), _('Submarine swap'), lambda: self.main_window.run_swap_dialog())
+        # Blackcoin: Submarine swaps are disabled.
+        import electrum_blk.constants as constants
+        if constants.SWAPS_ENABLED:
+            menu.addAction(read_QIcon('update.png'), _('Submarine swap'), lambda: self.main_window.run_swap_dialog())
         menu.addSeparator()
         menu.addAction(_("Import channel backup"), lambda: self.main_window.do_process_from_text_channel_backup())
         # only enable menu if has LN. Or we could selectively enable menu items?

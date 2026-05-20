@@ -1156,6 +1156,11 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, Logger, QtEventListener):
         return func(*args, password)
 
     def run_swap_dialog(self, is_reverse=None, recv_amount_sat=None, channels=None):
+        # Blackcoin: Submarine swaps are not supported/enabled.
+        import electrum_blk.constants as constants
+        if not constants.SWAPS_ENABLED:
+            self.show_error(_("Submarine swaps are disabled for Blackcoin."))
+            return
         if not self.network:
             self.show_error(_("You are offline."))
             return

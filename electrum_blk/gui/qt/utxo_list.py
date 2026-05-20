@@ -232,6 +232,10 @@ class UTXOList(MyTreeView):
             self._spend_set.clear()
 
     def can_swap_coins(self, coins):
+        # Blackcoin: Submarine swaps are disabled.
+        import electrum_blk.constants as constants
+        if not constants.SWAPS_ENABLED:
+            return False
         # fixme: min and max_amounts are known only after first request
         if self.wallet.lnworker is None:
             return False
