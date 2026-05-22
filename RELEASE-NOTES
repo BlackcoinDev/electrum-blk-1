@@ -1,3 +1,13 @@
+# Release 4.5.9 (May 25, 2026)
+ * Blackcoin Release:
+   - Enable SegWit as default.
+   - disallow p2wpkh-p2sh and p2wsh-p2sh (wrapped SegWit).
+   - Prefix length byte is updated from \x18 to \x1a (26) to match the "BlackCoin Signed Message:\n" header string length.
+   - Update submodules with upstream code.
+   - Disable several lightning and nostr settings.
+   - Disable 2FA features.
+   - Bug fixes.
+
 # Release 4.5.8 (Oct 23, 2024)
  * Qt Desktop GUI:
    - fix: regression: bump_fee and dscancel dialogs erroring (#9273)
