@@ -4,3 +4,6 @@
 [submodule "electrum_blk/www"]
 	path = electrum_blk/plugins/payserver/www
 	url = https://github.com/spesmilo/electrum-http.git
+[submodule "electrum_blk/plugins/keepkey/keepkeylib"]
+	path = electrum_blk/plugins/keepkey/keepkeylib
+	url = https://github.com/spesmilo/electrum-keepkeylib.git

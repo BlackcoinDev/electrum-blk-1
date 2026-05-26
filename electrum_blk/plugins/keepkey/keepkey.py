@@ -75,17 +75,17 @@ class KeepKeyPlugin(HW_PluginBase):
 
         try:
             from . import client
-            import keepkeylib
-            import keepkeylib.ckd_public
-            import keepkeylib.transport_hid
-            import keepkeylib.transport_webusb
+            from .keepkeylib.keepkeylib import ckd_public
+            from .keepkeylib.keepkeylib import transport_hid
+            from .keepkeylib.keepkeylib import transport_webusb
+            from .keepkeylib.keepkeylib.client import types as client_types
             self.client_class = client.KeepKeyClient
-            self.ckd_public = keepkeylib.ckd_public
-            self.types = keepkeylib.client.types
-            self.DEVICE_IDS = (keepkeylib.transport_hid.DEVICE_IDS +
-                               keepkeylib.transport_webusb.DEVICE_IDS)
+            self.ckd_public = ckd_public
+            self.types = client_types
+            self.DEVICE_IDS = (transport_hid.DEVICE_IDS +
+                               transport_webusb.DEVICE_IDS)
             # only "register" hid device id:
-            self.device_manager().register_devices(keepkeylib.transport_hid.DEVICE_IDS, plugin=self)
+            self.device_manager().register_devices(transport_hid.DEVICE_IDS, plugin=self)
             # for webusb transport, use custom enumerate function:
             self.device_manager().register_enumerate_func(self.enumerate)
             self.libraries_available = True
@@ -94,7 +94,7 @@ class KeepKeyPlugin(HW_PluginBase):
 
     @runs_in_hwd_thread
     def enumerate(self):
-        from keepkeylib.transport_webusb import WebUsbTransport
+        from .keepkeylib.keepkeylib.transport_webusb import WebUsbTransport
         results = []
         for dev in WebUsbTransport.enumerate():
             path = self._dev_to_str(dev)
@@ -112,12 +112,12 @@ class KeepKeyPlugin(HW_PluginBase):
 
     @runs_in_hwd_thread
     def hid_transport(self, pair):
-        from keepkeylib.transport_hid import HidTransport
+        from .keepkeylib.keepkeylib.transport_hid import HidTransport
         return HidTransport(pair)
 
     @runs_in_hwd_thread
     def webusb_transport(self, device):
-        from keepkeylib.transport_webusb import WebUsbTransport
+        from .keepkeylib.keepkeylib.transport_webusb import WebUsbTransport
         for dev in WebUsbTransport.enumerate():
             if device.path == self._dev_to_str(dev):
                 return WebUsbTransport(dev)

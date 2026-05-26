@@ -6,8 +6,7 @@ trezor[hidapi]>=0.13.0,<0.14
 # device plugin: safe_t
 safet>=0.1.5
 
-# device plugin: keepkey
-keepkey>=6.3.1
+# device plugin: keepkey (vendored keepkeylib — transitive deps still required)
 ecdsa>=0.9
 protobuf>=3.20
 mnemonic>=0.8
@@ -27,3 +26,7 @@ bitbox02>=7.0.0
 # device plugin: jade
 cbor2>=5.4.6,<6.0.0
 pyserial>=3.5.0,<4.0.0
+
+# prefer older urllib3 to avoid needing hatchling
+# (pulled in via trezor -> requests -> urllib3)
+urllib3<2
