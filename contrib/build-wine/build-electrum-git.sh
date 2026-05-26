@@ -37,7 +37,7 @@ export PROPCACHE_NO_EXTENSIONS=1
 export ELECTRUM_ECC_DONT_COMPILE=1
 
 info "Installing requirements..."
-$WINE_PYTHON -m pip install --no-build-isolation --no-dependencies --no-binary :all: --no-warn-script-location \
+$WINE_PYTHON -m pip install --no-build-isolation --no-dependencies --no-binary :all: --only-binary protobuf --no-warn-script-location \
     --cache-dir "$WINE_PIP_CACHE_DIR" -r "$CONTRIB"/deterministic-build/requirements.txt
 info "Installing dependencies specific to binaries..."
 # TODO tighten "--no-binary :all:" (but we don't have a C compiler...)
@@ -46,7 +46,7 @@ $WINE_PYTHON -m pip install --no-build-isolation --no-dependencies --no-warn-scr
     --cache-dir "$WINE_PIP_CACHE_DIR" -r "$CONTRIB"/deterministic-build/requirements-binaries.txt
 info "Installing hardware wallet requirements..."
 $WINE_PYTHON -m pip install --no-build-isolation --no-dependencies --no-warn-script-location \
-    --no-binary :all: --only-binary cffi,cryptography,hidapi \
+    --no-binary :all: --only-binary cffi,cryptography,hidapi,protobuf \
     --cache-dir "$WINE_PIP_CACHE_DIR" -r "$CONTRIB"/deterministic-build/requirements-hw.txt
 
 pushd "$PROJECT_ROOT"
