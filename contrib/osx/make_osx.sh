@@ -3,8 +3,8 @@
 set -e
 
 # Parameterize
-PYTHON_VERSION=3.11.9
-PY_VER_MAJOR="3.11"  # as it appears in fs paths
+PYTHON_VERSION=3.12.10
+PY_VER_MAJOR="3.12"  # as it appears in fs paths
 PACKAGE=Electrum-BLK
 GIT_REPO=https://github.com/CoinBlack/electrum-blk
 
@@ -20,8 +20,9 @@ CONTRIB="$CONTRIB_OSX/.."
 PROJECT_ROOT="$CONTRIB/.."
 CACHEDIR="$CONTRIB_OSX/.cache"
 export DLL_TARGET_DIR="$CACHEDIR/dlls"
+PIP_CACHE_DIR="$CACHEDIR/pip_cache"
 
-mkdir -p "$CACHEDIR" "$DLL_TARGET_DIR"
+mkdir -p "$CACHEDIR" "$DLL_TARGET_DIR" "$PIP_CACHE_DIR"
 
 cd "$PROJECT_ROOT"
 
@@ -32,20 +33,35 @@ which brew > /dev/null 2>&1 || fail "Please install brew from https://brew.sh/ t
 which xcodebuild > /dev/null 2>&1 || fail "Please install xcode command line tools to continue"
 
 
-info "Installing Python $PYTHON_VERSION"
-PKG_FILE="python-${PYTHON_VERSION}-macos11.pkg"
-if [ ! -f "$CACHEDIR/$PKG_FILE" ]; then
-    curl -o "$CACHEDIR/$PKG_FILE" "https://www.python.org/ftp/python/${PYTHON_VERSION}/$PKG_FILE"
-fi
-echo "b6cfdee2571ca56ee895043ca1e7110fb78a878cee3eb0c21accb2de34d24b55  $CACHEDIR/$PKG_FILE" | shasum -a 256 -c \
-    || fail "python pkg checksum mismatched"
-sudo installer -pkg "$CACHEDIR/$PKG_FILE" -target / \
-    || fail "failed to install python"
+PYTHON="python${PY_VER_MAJOR}"
 
-# sanity check "python3" has the version we just installed.
-FOUND_PY_VERSION=$(python3 -c 'import sys; print(".".join(map(str, sys.version_info[:3])))')
-if [[ "$FOUND_PY_VERSION" != "$PYTHON_VERSION" ]]; then
-    fail "python version mismatch: $FOUND_PY_VERSION != $PYTHON_VERSION"
+info "Checking Python ${PYTHON_VERSION}"
+FOUND_PY_VERSION=$(${PYTHON} -c 'import sys; print(".".join(map(str, sys.version_info[:3])))' 2>/dev/null || echo "0.0.0")
+PY_MAJOR=$(echo "$FOUND_PY_VERSION" | cut -d. -f1)
+PY_MINOR=$(echo "$FOUND_PY_VERSION" | cut -d. -f2)
+PY_PATCH=$(echo "$FOUND_PY_VERSION" | cut -d. -f3)
+NEED_MAJOR=$(echo "$PYTHON_VERSION" | cut -d. -f1)
+NEED_MINOR=$(echo "$PYTHON_VERSION" | cut -d. -f2)
+NEED_PATCH=$(echo "$PYTHON_VERSION" | cut -d. -f3)
+
+if [ "$PY_MAJOR" -eq "$NEED_MAJOR" ] && [ "$PY_MINOR" -eq "$NEED_MINOR" ] && [ "$PY_PATCH" -ge "$NEED_PATCH" ]; then
+    info "Python $FOUND_PY_VERSION already installed, skipping download"
+else
+    info "Installing Python $PYTHON_VERSION"
+    PKG_FILE="python-${PYTHON_VERSION}-macos11.pkg"
+    if [ ! -f "$CACHEDIR/$PKG_FILE" ]; then
+        curl -o "$CACHEDIR/$PKG_FILE" "https://www.python.org/ftp/python/${PYTHON_VERSION}/$PKG_FILE"
+    fi
+    echo "8373e58da4ea146b3eb1c1f9834f19a319440b6b679b06050b1f9ee3237aa8e4  $CACHEDIR/$PKG_FILE" | shasum -a 256 -c \
+        || fail "python pkg checksum mismatched"
+    sudo installer -pkg "$CACHEDIR/$PKG_FILE" -target / \
+        || fail "failed to install python"
+
+    # sanity check the versioned binary matches what we just installed.
+    FOUND_PY_VERSION=$(${PYTHON} -c 'import sys; print(".".join(map(str, sys.version_info[:3])))')
+    if [[ "$FOUND_PY_VERSION" != "$PYTHON_VERSION" ]]; then
+        fail "python version mismatch: $FOUND_PY_VERSION != $PYTHON_VERSION"
+    fi
 fi
 
 break_legacy_easy_install
@@ -54,18 +70,22 @@ break_legacy_easy_install
 # This helps to avoid older versions of pip-installed dependencies interfering with the build.
 VENV_DIR="$CONTRIB_OSX/build-venv"
 rm -rf "$VENV_DIR"
-python3 -m venv $VENV_DIR
-source $VENV_DIR/bin/activate
+${PYTHON} -m venv "$VENV_DIR"
+source "$VENV_DIR/bin/activate"
 
 # don't add debug info to compiled C files (e.g. when pip calls setuptools/wheel calls gcc)
 # see https://github.com/pypa/pip/issues/6505#issuecomment-526613584
 # note: this does not seem sufficient when cython is involved (although it is on linux, just not on mac... weird.)
 #       see additional "strip" pass on built files later in the file.
-export CFLAGS="-g0"
+OPENSSL_PREFIX=$(brew --prefix openssl)
+export CFLAGS="-g0 -I${OPENSSL_PREFIX}/include"
+export LDFLAGS="-L${OPENSSL_PREFIX}/lib"
+export CPPFLAGS="-I${OPENSSL_PREFIX}/include"
 
 # Do not build universal binaries. The default on macos 11+ and xcode 12+ is "-arch arm64 -arch x86_64"
 # but with that e.g. "hid.cpython-310-darwin.so" is not reproducible as built by clang.
-export ARCHFLAGS="-arch x86_64"
+NATIVE_ARCH=$(uname -m)
+export ARCHFLAGS="-arch ${NATIVE_ARCH}"
 
 info "Installing build dependencies"
 # note: re pip installing from PyPI,
@@ -77,19 +97,19 @@ info "Installing build dependencies"
 #         and I am not quite sure how to break the circular dependence there (I guess we could introduce
 #         "requirements-build-base-base.txt" with just wheel in it...)
 python3 -m pip install --no-build-isolation --no-dependencies --no-warn-script-location \
-    -Ir ./contrib/deterministic-build/requirements-build-base.txt \
+    --cache-dir "$PIP_CACHE_DIR" -Ir ./contrib/deterministic-build/requirements-build-base.txt \
     || fail "Could not install build dependencies (base)"
 python3 -m pip install --no-build-isolation --no-dependencies --no-binary :all: --no-warn-script-location \
-    -Ir ./contrib/deterministic-build/requirements-build-mac.txt \
+    --cache-dir "$PIP_CACHE_DIR" -Ir ./contrib/deterministic-build/requirements-build-mac.txt \
     || fail "Could not install build dependencies (mac)"
 
 info "Installing some build-time deps for compilation..."
-brew install autoconf automake libtool gettext coreutils pkgconfig
+brew install autoconf automake libtool gettext coreutils pkgconfig openssl libiconv
 
 info "Building PyInstaller."
 PYINSTALLER_REPO="https://github.com/pyinstaller/pyinstaller.git"
-PYINSTALLER_COMMIT="5d7a0449ecea400eccbbb30d5fcef27d72f8f75d"
-# ^ tag "v6.6.0"
+PYINSTALLER_COMMIT="306d4d92580fea7be7ff2c89ba112cdc6f73fac1"
+# ^ tag "v6.13.0"
 (
     if [ -f "$CACHEDIR/pyinstaller/PyInstaller/bootloader/Darwin-64bit/runw" ]; then
         info "pyinstaller already built, skipping"
@@ -116,9 +136,38 @@ PYINSTALLER_COMMIT="5d7a0449ecea400eccbbb30d5fcef27d72f8f75d"
     popd
     # sanity check bootloader is there:
     [[ -e "PyInstaller/bootloader/Darwin-64bit/runw" ]] || fail "Could not find runw in target dir!"
-) || fail "PyInstaller build failed"
+)
 info "Installing PyInstaller."
-python3 -m pip install --no-build-isolation --no-dependencies --no-warn-script-location "$CACHEDIR/pyinstaller"
+python3 -m pip install --no-build-isolation --no-dependencies \
+    --cache-dir "$PIP_CACHE_DIR" --no-warn-script-location "$CACHEDIR/pyinstaller"
+
+# Patch PyInstaller's osx.py to handle cross-link symlinks created before
+# their target directories exist. Without this, os.makedirs fails with
+# FileNotFoundError when it encounters a broken symlink in the path.
+PYI_OSX_PY="$VENV_DIR/lib/python$PY_VER_MAJOR/site-packages/PyInstaller/building/osx.py"
+if grep -q "candidate = os.path.dirname(candidate)" "$PYI_OSX_PY" 2>/dev/null; then
+    info "PyInstaller osx.py symlink fix already applied, skipping."
+else
+    python3 -c "
+import re, sys
+with open('$PYI_OSX_PY', 'r') as f:
+    src = f.read()
+old = '            dest_dir = os.path.dirname(dest_path)\n            try:'
+new = '''            dest_dir = os.path.dirname(dest_path)
+            candidate = dest_dir
+            while candidate and len(candidate) > len(self.name):
+                if os.path.islink(candidate) and not os.path.exists(candidate):
+                    dest_dir = os.path.realpath(candidate) + dest_dir[len(candidate):]
+                    break
+                candidate = os.path.dirname(candidate)
+            try:'''
+if old not in src:
+    sys.exit('Pattern not found in osx.py, cannot patch')
+with open('$PYI_OSX_PY', 'w') as f:
+    f.write(src.replace(old, new))
+"
+    info "Patched PyInstaller osx.py to handle broken cross-link symlinks."
+fi
 
 info "Using these versions for building $PACKAGE:"
 sw_vers
@@ -128,9 +177,12 @@ pyinstaller --version
 
 rm -rf ./dist
 
-git submodule update --init
+info "resetting git submodules."
+# note: --force is less critical in other build scripts, but as the mac build is not doing a fresh clone,
+#       it is very useful here for reproducibility
+git submodule update --init --force
 
-info "generating locale"
+info "preparing electrum-blk-locale."
 (
     if ! which msgfmt > /dev/null 2>&1; then
         brew install gettext
@@ -143,13 +195,13 @@ info "generating locale"
 ) || fail "failed generating locale"
 
 
-if [ ! -f "$DLL_TARGET_DIR/libsecp256k1.2.dylib" ]; then
+if ls "$DLL_TARGET_DIR"/libsecp256k1.*.dylib 1> /dev/null 2>&1; then
+    info "libsecp256k1 already built, skipping"
+else
     info "Building libsecp256k1 dylib..."
     "$CONTRIB"/make_libsecp256k1.sh || fail "Could not build libsecp"
-else
-    info "Skipping libsecp256k1 build: reusing already built dylib."
 fi
-#cp -f "$DLL_TARGET_DIR"/libsecp256k1.*.dylib "$PROJECT_ROOT/electrum_blk" || fail "Could not copy libsecp256k1 dylib"
+cp -f "$DLL_TARGET_DIR"/libsecp256k1.*.dylib "$PROJECT_ROOT/electrum_blk" || fail "Could not copy libsecp256k1 dylib"
 
 if [ ! -f "$DLL_TARGET_DIR/libzbar.0.dylib" ]; then
     info "Building ZBar dylib..."
@@ -167,29 +219,34 @@ else
 fi
 cp -f "$DLL_TARGET_DIR/libusb-1.0.dylib" "$PROJECT_ROOT/electrum_blk/" || fail "Could not copy libusb dylib"
 
+# opt out of compiling C extensions
+export FROZENLIST_NO_EXTENSIONS=1
+export YARL_NO_EXTENSIONS=1
+export PROPCACHE_NO_EXTENSIONS=1
+
+export ELECTRUM_ECC_DONT_COMPILE=1
 
 info "Installing requirements..."
-export ELECTRUM_ECC_DONT_COMPILE=1
 python3 -m pip install --no-build-isolation --no-dependencies --no-binary :all: \
-    --no-warn-script-location \
+    --cache-dir "$PIP_CACHE_DIR" --no-warn-script-location \
     -Ir ./contrib/deterministic-build/requirements.txt \
     || fail "Could not install requirements"
 
 info "Installing hardware wallet requirements..."
 python3 -m pip install --no-build-isolation --no-dependencies --no-binary :all: --only-binary cryptography \
-    --no-warn-script-location \
+    --cache-dir "$PIP_CACHE_DIR" --no-warn-script-location \
     -Ir ./contrib/deterministic-build/requirements-hw.txt \
     || fail "Could not install hardware wallet requirements"
 
 info "Installing dependencies specific to binaries..."
-python3 -m pip install --no-build-isolation --no-dependencies --no-binary :all: --only-binary PyQt6,PyQt6-Qt6,scrypt,cryptography \
-    --no-warn-script-location \
+python3 -m pip install --no-build-isolation --no-dependencies --no-binary :all: --only-binary PyQt6,PyQt6-Qt6,cryptography \
+    --cache-dir "$PIP_CACHE_DIR" --no-warn-script-location \
     -Ir ./contrib/deterministic-build/requirements-binaries-mac.txt \
     || fail "Could not install dependencies specific to binaries"
 
 info "Building $PACKAGE..."
 python3 -m pip install --no-build-isolation --no-dependencies \
-    --no-warn-script-location . > /dev/null || fail "Could not build $PACKAGE"
+    --cache-dir "$PIP_CACHE_DIR" --no-warn-script-location . > /dev/null || fail "Could not build $PACKAGE"
 # pyinstaller needs to be able to "import electrum_ecc", for which we need libsecp256k1:
 # (or could try "pip install -e" instead)
 cp "$DLL_TARGET_DIR"/libsecp256k1.*.dylib "$VENV_DIR/lib/python$PY_VER_MAJOR/site-packages/electrum_ecc/"

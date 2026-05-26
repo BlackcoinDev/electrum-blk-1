@@ -21,14 +21,14 @@ To be able to build the `electrum-ecc` package from source
 (which is pulled in when installing Electrum in the next step),
 you need:
 ```
-$ brew install autoconf automake libtool coreutils
+$ brew install autoconf automake libtool coreutils openssl libiconv
 ```
 
 ### 3. Install Electrum
 
 Run install (this should install the dependencies):
 ```
-$ python3 -m pip install --user -e ".[gui,crypto]"
+$ python3 -m pip install --user -e ".[gui,crypto,hardware]"
 ```
 
 ### 4. Run electrum:

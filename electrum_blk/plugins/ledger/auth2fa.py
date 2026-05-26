@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 from PyQt6.QtWidgets import (QDialog, QLineEdit, QTextEdit, QVBoxLayout, QLabel,
                              QWidget, QHBoxLayout, QComboBox)
 
-from btchip.btchip import BTChipException
+from ledger_bitcoin.btchip.btchip import BTChipException
 
 from electrum_blk.gui.qt.util import PasswordLineEdit
 

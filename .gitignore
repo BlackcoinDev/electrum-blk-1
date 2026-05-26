@@ -51,3 +51,9 @@ electrum_blk/*.so.*
 electrum_blk/*.dll
 electrum_blk/*.dylib
 contrib/osx/*.dylib
+
+# Blackcoin specifics
+.omo
+AGENTS.md
+.venv/
+.venv_make_packages/

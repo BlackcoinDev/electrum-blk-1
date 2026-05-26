@@ -27,6 +27,7 @@ fi
 
 git submodule update --init
 
+info "preparing electrum-locale."
 (
     # By default, include both source (.po) and compiled (.mo) locale files in the source dist.
     # Set option OMIT_UNCLEAN_FILES=1 to exclude the compiled locale files

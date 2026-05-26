@@ -3,7 +3,8 @@
 
 set -e
 
-CONTRIB="$(dirname "$(readlink -e "$0")")"
+if [ "$(uname)" = "Darwin" ]; then READLINK="greadlink"; DATE="gdate"; else READLINK="readlink"; DATE="date"; fi
+CONTRIB="$(dirname "$("$READLINK" -e "$0")")"
 PROJECT_ROOT="$CONTRIB"/..
 PACKAGES="$PROJECT_ROOT"/packages/
 
@@ -26,11 +27,11 @@ python3 -m pip install --no-build-isolation --no-dependencies --no-warn-script-l
     -r "$CONTRIB"/deterministic-build/requirements-build-base.txt
 
 # opt out of compiling C extensions
-# FIXME aiohttp opt-out is not released yet: https://github.com/aio-libs/aiohttp/pull/3828
 export AIOHTTP_NO_EXTENSIONS=1
 export YARL_NO_EXTENSIONS=1
 export MULTIDICT_NO_EXTENSIONS=1
 export FROZENLIST_NO_EXTENSIONS=1
+export PROPCACHE_NO_EXTENSIONS=1
 
 export ELECTRUM_ECC_DONT_COMPILE=1
 
@@ -43,8 +44,8 @@ export LC_ALL=C
 export TZ=UTC
 export SOURCE_DATE_EPOCH="$(git log -1 --pretty=%ct 2>/dev/null || printf 1530212462)"
 export PYTHONHASHSEED="$SOURCE_DATE_EPOCH"
-export BUILD_DATE="$(LC_ALL=C TZ=UTC date +'%b %e %Y' -d @$SOURCE_DATE_EPOCH)"
-export BUILD_TIME="$(LC_ALL=C TZ=UTC date +'%H:%M:%S' -d @$SOURCE_DATE_EPOCH)"
+export BUILD_DATE="$(LC_ALL=C TZ=UTC "$DATE" +'%b %e %Y' -d @$SOURCE_DATE_EPOCH)"
+export BUILD_TIME="$(LC_ALL=C TZ=UTC "$DATE" +'%H:%M:%S' -d @$SOURCE_DATE_EPOCH)"
 
 # FIXME aiohttp will compile some .so files using distutils
 #       (until https://github.com/aio-libs/aiohttp/pull/4079 gets released),

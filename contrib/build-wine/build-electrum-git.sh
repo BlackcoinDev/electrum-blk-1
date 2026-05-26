@@ -1,6 +1,7 @@
 #!/bin/bash
 
 NAME_ROOT=electrum-blk
+PROJECT_ROOT="$WINEPREFIX/drive_c/electrum-blk"
 
 export PYTHONDONTWRITEBYTECODE=1  # don't create __pycache__/ folders with .pyc files
 
@@ -10,7 +11,7 @@ set -e
 
 . "$CONTRIB"/build_tools_util.sh
 
-pushd $WINEPREFIX/drive_c/electrum-blk
+pushd "$PROJECT_ROOT"
 
 VERSION=$(git describe --tags --dirty --always)
 info "Last commit: $VERSION"
@@ -32,6 +33,7 @@ export AIOHTTP_NO_EXTENSIONS=1
 export YARL_NO_EXTENSIONS=1
 export MULTIDICT_NO_EXTENSIONS=1
 export FROZENLIST_NO_EXTENSIONS=1
+export PROPCACHE_NO_EXTENSIONS=1
 export ELECTRUM_ECC_DONT_COMPILE=1
 
 info "Installing requirements..."
@@ -47,7 +49,7 @@ $WINE_PYTHON -m pip install --no-build-isolation --no-dependencies --no-warn-scr
     --no-binary :all: --only-binary cffi,cryptography,hidapi \
     --cache-dir "$WINE_PIP_CACHE_DIR" -r "$CONTRIB"/deterministic-build/requirements-hw.txt
 
-pushd $WINEPREFIX/drive_c/electrum-blk
+pushd "$PROJECT_ROOT"
 # see https://github.com/pypa/pip/issues/2195 -- pip makes a copy of the entire directory
 info "Pip installing Electrum-BLK. This might take a long time if the project folder is large."
 $WINE_PYTHON -m pip install --no-build-isolation --no-dependencies --no-warn-script-location .

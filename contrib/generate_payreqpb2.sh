@@ -1,7 +1,8 @@
 #!/bin/bash
 # Generates the file paymentrequest_pb2.py
 
-CONTRIB="$(dirname "$(readlink -e "$0")")"
+if [ "$(uname)" = "Darwin" ]; then READLINK="greadlink"; else READLINK="readlink"; fi
+CONTRIB="$(dirname "$("$READLINK" -e "$0")")"
 EL="$CONTRIB"/../electrum_blk
 
 if ! which protoc > /dev/null 2>&1; then

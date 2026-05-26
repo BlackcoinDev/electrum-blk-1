@@ -15,7 +15,7 @@ ZBAR_VERSION="bb05ec54eec57f8397cb13fb9161372a281a1219"
 
 set -e
 
-. $(dirname "$0")/build_tools_util.sh || (echo "Could not source build_tools_util.sh" && exit 1)
+. "$(dirname "$0")/build_tools_util.sh" || (echo "Could not source build_tools_util.sh" && exit 1)
 
 here="$(dirname "$(realpath "$0" 2> /dev/null || grealpath "$0")")"
 CONTRIB="$here"
@@ -56,10 +56,13 @@ info "Building $pkgname..."
                 --disable-dependency-tracking"
         elif [ $(uname) == "Darwin" ]; then
             # macos target
+            LIBICONV_PREFIX=$(brew --prefix libiconv)
             AUTOCONF_FLAGS="$AUTOCONF_FLAGS \
                 --with-x=no \
                 --enable-video=no \
-                --with-jpeg=no"
+                --with-jpeg=no \
+                LDFLAGS=-L${LIBICONV_PREFIX}/lib \
+                CPPFLAGS=-I${LIBICONV_PREFIX}/include"
         else
             # linux target
             AUTOCONF_FLAGS="$AUTOCONF_FLAGS \

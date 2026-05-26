@@ -34,7 +34,7 @@ try:
     from ckcc.constants import (MAX_MSG_LEN, MAX_BLK_LEN, MSG_SIGNING_MAX_LENGTH, MAX_TXN_LEN,
         AF_CLASSIC, AF_P2SH, AF_P2WPKH, AF_P2WSH, AF_P2WPKH_P2SH, AF_P2WSH_P2SH)
 
-    from ckcc.client import ColdcardDevice, COINKITE_VID, CKCC_PID, CKCC_SIMULATOR_PATH
+    from ckcc.client import ColdcardDevice, COINKITE_VID, CKCC_PID
 
     requirements_ok = True
 
@@ -505,7 +505,7 @@ class ColdcardPlugin(HW_PluginBase):
     def detect_simulator(self):
         # if there is a simulator running on this machine,
         # return details about it so it's offered as a pairing choice
-        fn = CKCC_SIMULATOR_PATH
+        fn = "/tmp/ckcc-simulator.sock"
 
         if os.path.exists(fn):
             return [Device(path=fn,

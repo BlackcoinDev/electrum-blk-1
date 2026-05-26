@@ -27,7 +27,7 @@ import os
 import sys
 
 
-MIN_PYTHON_VERSION = "3.10.0"  # FIXME duplicated from setup.py
+MIN_PYTHON_VERSION = "3.12.3"  # FIXME duplicated from setup.py
 _min_python_version_tuple = tuple(map(int, (MIN_PYTHON_VERSION.split("."))))
 
 
@@ -37,7 +37,7 @@ if sys.version_info[:3] < _min_python_version_tuple:
 
 import warnings
 import asyncio
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Optional, Dict
 
 
 script_dir = os.path.dirname(os.path.realpath(__file__))
@@ -65,6 +65,11 @@ if is_pyinstaller:
     _file = open(sys.executable, 'rb')
 
 
+# when running from source, on Windows, also search for DLLs in inner 'electrum_blk' folder
+if is_local and os.name == 'nt':  # fixme: duplicated between main script and __init__.py :(
+    os.add_dll_directory(os.path.join(os.path.dirname(__file__), 'electrum_blk'))
+
+
 def check_imports():
     # pure-python dependencies need to be imported here for pyinstaller
     try:
@@ -75,8 +80,8 @@ def check_imports():
         import aiorpcx
     except ImportError as e:
         sys.exit(f"Error: {str(e)}. Try 'sudo python3 -m pip install <module-name>'")
-    if not ((0, 22, 0) <= aiorpcx._version < (0, 25)):
-        raise RuntimeError(f'aiorpcX version {aiorpcx._version} does not match required: 0.22.0<=ver<0.25')
+    if not ((0, 22, 0) <= aiorpcx._version < (0, 26)):
+        raise RuntimeError(f'aiorpcX version {aiorpcx._version} does not match required: 0.22.0<=ver<0.26')
     # the following imports are for pyinstaller
     from google.protobuf import descriptor
     from google.protobuf import message
@@ -94,19 +99,19 @@ sys._ELECTRUM_RUNNING_VIA_RUNELECTRUM = True  # used by logging.py
 
 from electrum_blk.logging import get_logger, configure_logging  # import logging submodule first
 from electrum_blk import util
-from electrum_blk.payment_identifier import PaymentIdentifier
-from electrum_blk import constants
 from electrum_blk import SimpleConfig
+from electrum_blk.payment_identifier import PaymentIdentifier
 from electrum_blk.wallet_db import WalletDB
 from electrum_blk.wallet import Wallet
 from electrum_blk.storage import WalletStorage
 from electrum_blk.util import print_msg, print_stderr, json_encode, json_decode, UserCancelled
 from electrum_blk.util import InvalidPassword
-from electrum_blk.commands import get_parser, known_commands, Commands, config_variables
-from electrum_blk import daemon
 from electrum_blk import keystore
+from electrum_blk.commands import get_parser, known_commands, Commands, config_variables
 from electrum_blk.util import create_and_start_event_loop, UserFacingException, JsonRPCError
 from electrum_blk.i18n import set_language
+from electrum_blk import constants
+from electrum_blk import daemon
 
 if TYPE_CHECKING:
     import threading
@@ -269,6 +274,7 @@ def init_plugins(config, gui_name):
 loop = None  # type: Optional[asyncio.AbstractEventLoop]
 stop_loop = None  # type: Optional[asyncio.Future]
 loop_thread = None  # type: Optional[threading.Thread]
+
 
 def sys_exit(i):
     # stop event loop and exit
@@ -483,7 +489,6 @@ def handle_cmd(*, cmdname: str, config: 'SimpleConfig', config_options: dict):
                 sys_exit(1)
 
     elif cmdname == 'daemon':
-
         configure_logging(config)
         fd = daemon.get_file_descriptor(config)
         if fd is not None:
@@ -527,7 +532,7 @@ def handle_cmd(*, cmdname: str, config: 'SimpleConfig', config_options: dict):
             except Exception as e:
                 _logger.exception("error running command (with daemon)")
                 sys_exit(1)
-        else:
+        else:  # --offline
             if cmd.requires_network:
                 print_msg("This command cannot be run offline")
                 sys_exit(1)

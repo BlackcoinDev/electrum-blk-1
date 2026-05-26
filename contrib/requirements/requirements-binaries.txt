@@ -1,5 +1,7 @@
 PyQt6
-scrypt>=0.8.27
+
+# Blackcoin uses scrypt for pre-PoSv2 blocks
+scrypt>=0.8.29
 
 # we need at least cryptography>=2.1 for electrum.crypto,
 # and at least cryptography>=2.6 for dnspython[DNSSEC]
