@@ -39,13 +39,12 @@ try:
     from ledgercomm.interfaces.hid_device import HID
 
     # legacy imports
-    # note: we could replace "btchip" with "ledger_bitcoin.btchip" but the latter does not support HW.1
     import hid
-    from btchip.btchipComm import HIDDongleHIDAPI
-    from btchip.btchip import btchip
-    from btchip.btchipUtils import compress_public_key
-    from btchip.bitcoinTransaction import bitcoinTransaction
-    from btchip.btchipException import BTChipException
+    from ledger_bitcoin.btchip.btchipComm import HIDDongleHIDAPI
+    from ledger_bitcoin.btchip.btchip import btchip
+    from ledger_bitcoin.btchip.btchipUtils import compress_public_key
+    from ledger_bitcoin.btchip.bitcoinTransaction import bitcoinTransaction
+    from ledger_bitcoin.btchip.btchipException import BTChipException
 
     LEDGER_BITCOIN = True
 except ImportError as e:
@@ -1332,7 +1331,7 @@ class Ledger_KeyStore(Hardware_KeyStore):
 class LedgerPlugin(HW_PluginBase):
     keystore_class = Ledger_KeyStore
     minimum_library = (0, 2, 0)
-    maximum_library = (0, 4, 0)
+    maximum_library = (1, 0, 0)
     DEVICE_IDS = [(0x2581, 0x1807),  # HW.1 legacy btchip
                   (0x2581, 0x2b7c),  # HW.1 transitional production
                   (0x2581, 0x3b7c),  # HW.1 ledger production

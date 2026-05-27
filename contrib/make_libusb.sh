@@ -1,11 +1,11 @@
 #!/bin/bash
 
-LIBUSB_VERSION="4239bc3a50014b8e6a5a2a59df1fff3b7469543b"
-# ^ tag v1.0.26
+LIBUSB_VERSION="87a55632db62c9bdc58cd31d3ccfa673f1bb017f"
+# ^ tag v1.0.30
 
 set -e
 
-. $(dirname "$0")/build_tools_util.sh || (echo "Could not source build_tools_util.sh" && exit 1)
+. "$(dirname "$0")/build_tools_util.sh" || (echo "Could not source build_tools_util.sh" && exit 1)
 
 here="$(dirname "$(realpath "$0" 2> /dev/null || grealpath "$0")")"
 CONTRIB="$here"
@@ -44,6 +44,7 @@ info "Building $pkgname..."
             LDFLAGS=""
         fi
         LDFLAGS="$LDFLAGS" ./configure \
+            --prefix="$here/$pkgname/dist" \
             $AUTOCONF_FLAGS \
             || fail "Could not configure $pkgname. Please make sure you have a C compiler installed and try again."
     fi

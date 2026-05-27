@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -e
+
 here=$(dirname "$0")
 test -n "$here" -a -d "$here" || exit
 

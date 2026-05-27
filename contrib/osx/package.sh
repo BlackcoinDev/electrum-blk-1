@@ -2,7 +2,8 @@
 
 set -ex
 
-PROJECT_ROOT="$(dirname "$(readlink -e "$0")")/../.."
+if [ "$(uname)" = "Darwin" ]; then READLINK="greadlink"; else READLINK="readlink"; fi
+PROJECT_ROOT="$(dirname "$("$READLINK" -e "$0")")/../.."
 CONTRIB="$PROJECT_ROOT/contrib"
 . "$CONTRIB"/build_tools_util.sh
 
@@ -65,6 +66,7 @@ dmg - || fail "Unable to install libdmg"
 plist=$1/Contents/Info.plist
 test -f "$plist" || fail "Info.plist not found"
 VERSION=$(grep -1 ShortVersionString $plist | tail -1 | gawk 'match($0, /<string>(.*)<\/string>/, a) {print a[1]}')
+NATIVE_ARCH=$(uname -m)
 echo $VERSION
 
 rm -rf /tmp/electrum-blk-macos/image > /dev/null 2>&1
@@ -88,8 +90,8 @@ ${genisoimage} \
     -o Electrum-BLK_uncompressed.dmg \
     /tmp/electrum-blk-macos/image || fail "Unable to create uncompressed dmg"
 
-dmg dmg Electrum-BLK_uncompressed.dmg electrum-blk-$VERSION.dmg || fail "Unable to create compressed dmg"
+dmg dmg Electrum-BLK_uncompressed.dmg electrum-blk-$VERSION-$NATIVE_ARCH.dmg || fail "Unable to create compressed dmg"
 rm Electrum-BLK_uncompressed.dmg
 
 echo "Done."
-sha256sum electrum-blk-$VERSION.dmg
+sha256sum electrum-blk-$VERSION-$NATIVE_ARCH.dmg
