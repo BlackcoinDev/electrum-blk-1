@@ -78,8 +78,13 @@ def check_imports():
         import qrcode
         import google.protobuf
         import aiorpcx
+        import aiohttp
+        import aiohttp_socks
+        import electrum_ecc
+        import jsonpatch
+        import electrum_aionostr
     except ImportError as e:
-        sys.exit(f"Error: {str(e)}. Try 'sudo python3 -m pip install <module-name>'")
+        sys.exit(f"Error: {str(e)}. Some dependencies are missing. Have you read the README? Or just try '$ python3 -m pip install -r contrib/requirements/requirements.txt'")
     if not ((0, 22, 0) <= aiorpcx._version < (0, 26)):
         raise RuntimeError(f'aiorpcX version {aiorpcx._version} does not match required: 0.22.0<=ver<0.26')
     # the following imports are for pyinstaller
@@ -95,6 +100,22 @@ if not is_android:
     check_imports()
 
 
+if is_android:
+    # hack to make pycryptodomex work on Android
+    # from https://github.com/kivy/python-for-android/issues/1866#issuecomment-927157780
+    import ctypes
+    ctypes.pythonapi = ctypes.PyDLL("libpython%d.%d.so" % sys.version_info[:2])  # replaces ctypes.PyDLL(None)
+
+
+# Set default application-wide file umask to more restrictive than typical.
+# We want to create all files and directories (esp. inside the datadir) with locked-down permissions.
+# note: this helps even on Windows! (see https://docs.python.org/3/library/os.html#os.mkdir)
+#       > `os.mkdir(path, mode=0o777, *, dir_fd=None)`
+#       >   On Windows, a mode of 0o700 is specifically handled to apply access control to the new
+#       >   directory such that only the current user and administrators have access.
+os.umask(0o0077)
+
+
 sys._ELECTRUM_RUNNING_VIA_RUNELECTRUM = True  # used by logging.py
 
 from electrum_blk.logging import get_logger, configure_logging  # import logging submodule first
@@ -106,6 +127,7 @@ from electrum_blk.wallet import Wallet
 from electrum_blk.storage import WalletStorage
 from electrum_blk.util import print_msg, print_stderr, json_encode, json_decode, UserCancelled
 from electrum_blk.util import InvalidPassword
+from electrum_blk.plugin import Plugins
 from electrum_blk import keystore
 from electrum_blk.commands import get_parser, known_commands, Commands, config_variables
 from electrum_blk.util import create_and_start_event_loop, UserFacingException, JsonRPCError
@@ -115,8 +137,6 @@ from electrum_blk import daemon
 
 if TYPE_CHECKING:
     import threading
-
-    from electrum_blk.plugin import Plugins
 
 _logger = get_logger(__name__)
 
@@ -205,8 +225,7 @@ def get_connected_hw_devices(plugins: 'Plugins'):
 def get_password_for_hw_device_encrypted_storage(plugins: 'Plugins') -> str:
     devices = get_connected_hw_devices(plugins)
     if len(devices) == 0:
-        print_msg("Error: No connected hw device found. Cannot decrypt this wallet.")
-        sys.exit(1)
+        raise UserFacingException("Error: No connected hw device found. Cannot decrypt this wallet.")
     elif len(devices) > 1:
         print_msg("Warning: multiple hardware devices detected. "
                   "The first one will be used to decrypt the wallet.")
@@ -218,7 +237,7 @@ def get_password_for_hw_device_encrypted_storage(plugins: 'Plugins') -> str:
         client.handler = client.plugin.create_handler(None)
         return client.get_password_for_storage_encryption()
     except UserCancelled:
-        sys.exit(0)
+        raise
 
 
 async def run_offline_command(config, config_options, plugins: 'Plugins'):
@@ -245,7 +264,7 @@ async def run_offline_command(config, config_options, plugins: 'Plugins'):
             wallet.check_password(password)
         except InvalidPassword:
             print_msg("Error: This password does not decode this wallet.")
-            sys.exit(1)
+            raise
     if cmd.requires_network:
         print_msg("Warning: running command offline")
     # arguments passed to function
@@ -410,6 +429,10 @@ def main():
         print_stderr('unknown command:', uri)
         sys.exit(1)
 
+    if sys.platform == "linux" and not is_android:
+        import electrum_blk.harden_memory_linux
+        electrum_blk.harden_memory_linux.set_dumpable_safe(False)
+
     if cmdname == 'daemon' and config.get("detach"):
         # detect lockfile.
         # This is not as good as get_file_descriptor, but that would require the asyncio loop
@@ -554,6 +577,12 @@ def handle_cmd(*, cmdname: str, config: 'SimpleConfig', config_options: dict):
                     plugins.stopped_event.wait(1)
             except UserFacingException as e:
                 print_stderr(str(e))
+                sys_exit(1)
+            except InvalidPassword:
+                print_stderr("Invalid password")
+                sys_exit(1)
+            except UserCancelled:
+                print_stderr("Aborted by user")
                 sys_exit(1)
             except Exception as e:
                 _logger.exception("error running command (without daemon)")
