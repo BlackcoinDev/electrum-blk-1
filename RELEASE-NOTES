@@ -1,4 +1,4 @@
-# Release 4.5.9 (May 25, 2026)
+# Release 4.5.9 (May 27, 2026)
  * Blackcoin Release:
    - Enable SegWit as default.
    - disallow p2wpkh-p2sh and p2wsh-p2sh (wrapped SegWit).
@@ -6,6 +6,7 @@
    - Update submodules with upstream code.
    - Disable several lightning and nostr settings.
    - Disable 2FA features.
+   - update the build system for modern OS
    - Bug fixes.
 
 # Release 4.5.8 (Oct 23, 2024)
@@ -184,7 +185,19 @@
    - support large channels (40f2087)
    - new flow for normal submarine swaps (fd10ae3)
      - the client now uses hold invoices, just like the server
-     - the client waits until HTLCs are received before going on-chain
+     - the client waits until HTLCs are r
+from .descriptor import Descriptor, MissingSolutionPiece, create_dummy_descriptor_from_address
+from .json_db import stored_in
+
+if TYPE_CHECKING:
+    from .wallet import Abstract_Wallet
+    from .network import Network
+    from .simple_config import SimpleConfig
+
+
+_logger = get_logger(__name__)
+DEBUG_PSBT_PARSING = False
+eceived before going on-chain
      - the user may cancel the swaps during that waiting time
    - don't create invoice with duplicate route hints (a3997f8)
    - don't set channel OPEN before channel_ready has been both sent and received (#8641)
