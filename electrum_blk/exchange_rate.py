@@ -32,8 +32,11 @@ CCY_PRECISIONS = {'BHD': 3, 'BIF': 0, 'BYR': 0, 'CLF': 4, 'CLP': 0,
                   'LYD': 3, 'MGA': 1, 'MRO': 1, 'OMR': 3, 'PYG': 0,
                   'RWF': 0, 'TND': 3, 'UGX': 0, 'UYI': 0, 'VND': 0,
                   'VUV': 0, 'XAF': 0, 'XAU': 4, 'XOF': 0, 'XPF': 0,
-                  # Cryptocurrencies
-                  'BTC': 8, 'LTC': 6, 'XRP': 4, 'ETH': 8,
+                  # Cryptocurrencies and exceptions
+                  'BLK': 8, 'BTC': 8, 'LTC': 6, 'XRP': 4, 'ETH': 8,
+                  'EUR': 6, 'USD': 6, 'GBP': 6, 'CAD': 6, 'AUD': 6,
+                  'CHF': 6, 'JPY': 6, 'CNY': 6, 'SGD': 6, 'NZD': 6,
+                  'BRL': 6, 'TWD': 6, 'SOL': 6, 'BNB': 6, 'SATS': 6,
                   }
 
 SPOT_RATE_REFRESH_TARGET = 150      # approx. every 2.5 minutes, try to refresh spot price
